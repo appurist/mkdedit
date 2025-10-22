@@ -72,8 +72,13 @@ body {
 }
 
 .btn-toggle {
+  background: white;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.btn-toggle:hover {
   background: #f0f0f0;
-  color: #666;
 }
 
 .btn-toggle.active {
