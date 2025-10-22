@@ -5,11 +5,6 @@ site:
   origin: http://localhost:4000
   view_transitions: true
 
-# Server configuration for file operations
-server:
-  dir: server
-  reload: true
-
 # Design system
 design:
   layers: [reset, base, components, utilities]
@@ -19,19 +14,8 @@ design:
 import_map:
   app: /app/index.js
 
-# Content processing
-content:
-  heading_ids: true
-  sections: false
-
 # Meta defaults
 meta:
   title: Markdown Editor
-  description: A web-based markdown editor with live preview
+  description: A pure client-side markdown editor with live preview
   viewport: width=device-width,initial-scale=1
-
-# Linguix configuration (API key should be set via environment variable)
-linguix:
-  enabled: true
-  # Set LINGUIX_API_KEY environment variable or update this field
-  api_key: null

@@ -38,11 +38,14 @@ body {
   align-items: center;
 }
 
-.file-select {
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.current-file {
+  font-size: 0.875rem;
+  color: #666;
+  font-style: italic;
   min-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn {

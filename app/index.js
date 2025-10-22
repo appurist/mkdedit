@@ -10,15 +10,15 @@ class MarkdownEditor {
     
     this.initializeElements()
     this.bindEvents()
-    this.loadFileList()
     this.updateUIForFileSystemSupport()
     this.initializeLinguix()
+    this.createNewFile() // Start with a blank file
   }
   
   initializeElements() {
     this.editor = document.getElementById('editor')
     this.preview = document.getElementById('preview')
-    this.fileSelect = document.getElementById('fileSelect')
+    this.currentFileNameEl = document.getElementById('currentFileName')
     this.openFileBtn = document.getElementById('openFile')
     this.newFileBtn = document.getElementById('newFile')
     this.saveFileBtn = document.getElementById('saveFile')
@@ -32,13 +32,6 @@ class MarkdownEditor {
     this.editor.addEventListener('input', () => {
       this.markDirty()
       this.updatePreview()
-    })
-    
-    // File selection
-    this.fileSelect.addEventListener('change', (e) => {
-      if (e.target.value) {
-        this.loadFile(e.target.value)
-      }
     })
     
     // Open file button
@@ -105,59 +98,21 @@ class MarkdownEditor {
     }
   }
   
-  async loadFileList() {
-    try {
-      const response = await fetch('/api/files')
-      const data = await response.json()
-      
-      this.fileSelect.innerHTML = '<option value="">Select a file...</option>'
-      
-      data.files.forEach(file => {
-        const option = document.createElement('option')
-        option.value = file
-        option.textContent = file
-        this.fileSelect.appendChild(option)
-      })
-    } catch (error) {
-      console.error('Failed to load file list:', error)
-    }
-  }
-  
-  async loadFile(filename) {
-    try {
-      const response = await fetch(`/api/files/${encodeURIComponent(filename)}`)
-      const data = await response.json()
-      
-      if (response.ok) {
-        this.editor.value = data.content
-        this.currentFile = filename
-        this.fileSelect.value = filename
-        this.markClean()
-        this.updatePreview()
-        this.updateTitle()
-      } else {
-        alert(`Error loading file: ${data.error}`)
-      }
-    } catch (error) {
-      console.error('Failed to load file:', error)
-      alert('Failed to load file')
-    }
-  }
   
   createNewFile() {
     this.editor.value = ''
     this.currentFile = null
     this.currentFileHandle = null
-    this.fileSelect.value = ''
-    this.markDirty()
+    this.markClean() // New file starts clean
     this.updatePreview()
     this.updateTitle()
+    this.updateCurrentFileName()
   }
   
   async openFile() {
     if (!this.supportsFileSystemAccess) {
-      // Fallback to server-based file selection
-      return this.loadFile(this.fileSelect.value)
+      alert('File System Access API is not supported in this browser. Please use Chrome 86+, Edge 86+, or enable the flag in Firefox.')
+      return
     }
     
     try {
@@ -166,7 +121,8 @@ class MarkdownEditor {
           description: 'Markdown files',
           accept: { 'text/markdown': ['.md'] }
         }],
-        multiple: false
+        multiple: false,
+        startIn: 'documents'
       })
       
       const file = await fileHandle.getFile()
@@ -175,10 +131,10 @@ class MarkdownEditor {
       this.editor.value = content
       this.currentFile = file.name
       this.currentFileHandle = fileHandle
-      this.fileSelect.value = ''
       this.markClean()
       this.updatePreview()
       this.updateTitle()
+      this.updateCurrentFileName()
     } catch (error) {
       if (error.name !== 'AbortError') {
         console.error('Failed to open file:', error)
@@ -189,8 +145,8 @@ class MarkdownEditor {
   
   async saveAsFile() {
     if (!this.supportsFileSystemAccess) {
-      // Fallback to server-based save
-      return this.saveFile()
+      alert('File System Access API is not supported in this browser. Please use Chrome 86+, Edge 86+, or enable the flag in Firefox.')
+      return
     }
     
     try {
@@ -199,7 +155,8 @@ class MarkdownEditor {
         types: [{
           description: 'Markdown files',
           accept: { 'text/markdown': ['.md'] }
-        }]
+        }],
+        startIn: 'documents'
       })
       
       const writable = await fileHandle.createWritable()
@@ -210,6 +167,7 @@ class MarkdownEditor {
       this.currentFileHandle = fileHandle
       this.markClean()
       this.updateTitle()
+      this.updateCurrentFileName()
     } catch (error) {
       if (error.name !== 'AbortError') {
         console.error('Failed to save file:', error)
@@ -219,8 +177,13 @@ class MarkdownEditor {
   }
   
   async saveFile() {
-    // If we have a file handle (from File System Access API), use it
-    if (this.currentFileHandle && this.supportsFileSystemAccess) {
+    if (!this.supportsFileSystemAccess) {
+      alert('File System Access API is not supported in this browser. Please use Chrome 86+, Edge 86+, or enable the flag in Firefox.')
+      return
+    }
+    
+    // If we have a file handle, use it
+    if (this.currentFileHandle) {
       try {
         const writable = await this.currentFileHandle.createWritable()
         await writable.write(this.editor.value)
@@ -237,45 +200,19 @@ class MarkdownEditor {
     }
     
     // If no current file, use Save As dialog
-    if (!this.currentFile) {
-      return this.saveAsFile()
-    }
-    
-    try {
-      const response = await fetch(`/api/files/${encodeURIComponent(this.currentFile)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: this.editor.value
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok) {
-        this.markClean()
-        this.loadFileList() // Refresh file list
-        this.fileSelect.value = this.currentFile
-        this.updateTitle()
-      } else {
-        alert(`Error saving file: ${data.error}`)
-      }
-    } catch (error) {
-      console.error('Failed to save file:', error)
-      alert('Failed to save file')
-    }
+    return this.saveAsFile()
   }
   
   markDirty() {
     this.isDirty = true
     this.updateTitle()
+    this.updateCurrentFileName()
   }
   
   markClean() {
     this.isDirty = false
     this.updateTitle()
+    this.updateCurrentFileName()
   }
   
   updateTitle() {
@@ -283,6 +220,13 @@ class MarkdownEditor {
       ? `${this.currentFile}${this.isDirty ? ' *' : ''} - Markdown Editor`
       : 'Markdown Editor'
     document.title = title
+  }
+  
+  updateCurrentFileName() {
+    const displayName = this.currentFile 
+      ? `${this.currentFile}${this.isDirty ? ' *' : ''}`
+      : 'No file selected'
+    this.currentFileNameEl.textContent = displayName
   }
   
   updateUIForFileSystemSupport() {
@@ -310,22 +254,14 @@ class MarkdownEditor {
         return
       }
       
-      // Get configuration from server
-      const configResponse = await fetch('/api/config')
-      const config = await configResponse.json()
+      // Prompt user for API key
+      const apiKey = prompt('Enter your Linguix API key (get one from https://developer.linguix.com/):')
       
-      let apiKey = config.linguix?.api_key
-      
-      // If no API key in config, prompt user
       if (!apiKey) {
-        apiKey = prompt('Enter your Linguix API key (get one from https://developer.linguix.com/):')
-        
-        if (!apiKey) {
-          console.log('No Linguix API key provided')
-          this.grammarCheckBtn.disabled = true
-          this.grammarCheckBtn.title = 'Linguix API key required'
-          return
-        }
+        console.log('No Linguix API key provided')
+        this.grammarCheckBtn.disabled = true
+        this.grammarCheckBtn.title = 'Linguix API key required'
+        return
       }
       
       // Initialize Linguix SDK
@@ -386,34 +322,15 @@ class MarkdownEditor {
     }
   }
   
-  async updatePreview() {
+  updatePreview() {
     const markdown = this.editor.value
     if (!markdown.trim()) {
       this.preview.innerHTML = '<p class="empty-state">Start typing markdown to see the preview...</p>'
       return
     }
     
-    try {
-      // Use Nuemark via the server-side API for rendering
-      const response = await fetch('/api/render', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ markdown })
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        this.preview.innerHTML = data.html
-      } else {
-        // Fallback to basic markdown rendering if Nuemark API is not available
-        this.preview.innerHTML = this.basicMarkdownToHtml(markdown)
-      }
-    } catch (error) {
-      console.error('Preview rendering failed, using fallback:', error)
-      this.preview.innerHTML = this.basicMarkdownToHtml(markdown)
-    }
+    // Use client-side markdown rendering
+    this.preview.innerHTML = this.basicMarkdownToHtml(markdown)
   }
   
   basicMarkdownToHtml(markdown) {
