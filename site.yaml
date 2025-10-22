@@ -19,3 +19,4 @@ meta:
 # Import map for client-side modules
 import_map:
   app: /index.js
+  nuemark: /node_modules/nuemark/index.js

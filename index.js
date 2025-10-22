@@ -1,4 +1,4 @@
-// Markdown Editor Application
+import { nuemark } from "./node_modules/nuemark/index.js"
 
 class MarkdownEditor {
   constructor() {
@@ -11,15 +11,8 @@ class MarkdownEditor {
     this.linguixInitialized = false
 
     console.log('File System Access API supported:', this.supportsFileSystemAccess)
-    console.log('showOpenFilePicker available:', typeof window.showOpenFilePicker)
-    console.log('showSaveFilePicker available:', typeof window.showSaveFilePicker)
     console.log('Linguix SDK available:', typeof window.Linguix?.LinguixCheckerSDK !== 'undefined')
-    console.log('window.Linguix:', window.Linguix)
-    console.log('All Linguix-related globals:', Object.keys(window).filter(key => key.toLowerCase().includes('linguix')))
-    console.log('LinguixCheckerSDK direct:', typeof LinguixCheckerSDK !== 'undefined' ? LinguixCheckerSDK : 'undefined')
     console.log('Nuemark imported successfully:', typeof nuemark !== 'undefined')
-    console.log('Chrome version:', navigator.userAgent.match(/Chrome\/(\d+)/)?.[1])
-    console.log('Is secure context (HTTPS):', window.isSecureContext)
 
     this.initializeElements()
     this.bindEvents()
@@ -27,9 +20,6 @@ class MarkdownEditor {
 
     // Wait a bit for Linguix SDK to load
     setTimeout(() => {
-      console.log('=== After 500ms delay ===')
-      console.log('window.Linguix after delay:', window.Linguix)
-      console.log('All globals after delay:', Object.keys(window).filter(key => key.toLowerCase().includes('linguix')))
       this.initializeLinguix()
     }, 500)
 
@@ -117,13 +107,14 @@ class MarkdownEditor {
 
   initializeSplitter() {
     let isResizing = false
+    const boundHandleSplitterMove = this.handleSplitterMove.bind(this)
 
     this.splitter.addEventListener('mousedown', (e) => {
       isResizing = true
-      document.addEventListener('mousemove', this.handleSplitterMove.bind(this))
+      document.addEventListener('mousemove', boundHandleSplitterMove)
       document.addEventListener('mouseup', () => {
         isResizing = false
-        document.removeEventListener('mousemove', this.handleSplitterMove.bind(this))
+        document.removeEventListener('mousemove', boundHandleSplitterMove)
       })
     })
   }
@@ -331,18 +322,12 @@ class MarkdownEditor {
   }
 
   async initializeLinguix() {
-    console.log('Checking Linguix SDK availability...')
-    console.log('window.Linguix type:', typeof window.Linguix)
-    console.log('LinguixCheckerSDK type:', typeof window.Linguix?.LinguixCheckerSDK)
-
     // Always enable the button - let user click to trigger setup
     this.grammarCheckBtn.disabled = false
 
     if (!window.Linguix?.LinguixCheckerSDK) {
-      console.log('Linguix SDK not available - will show error when user clicks')
       this.grammarCheckBtn.title = 'Click to enable grammar checking'
     } else {
-      console.log('Linguix SDK available')
       this.grammarCheckBtn.title = 'Click to toggle grammar checking'
     }
   }
@@ -451,29 +436,11 @@ class MarkdownEditor {
       this.preview.innerHTML = '<p class="empty-state">Start typing markdown to see the preview...</p>'
       return
     }
-    
-    // Use basic markdown rendering until NueJS Windows fixes are released
-    this.preview.innerHTML = this.basicMarkdownToHtml(markdown)
-    console.log('Rendered with basic markdown parser (waiting for NueJS Windows fixes)')
+
+    // Use Nuemark for full-featured markdown rendering
+    this.preview.innerHTML = nuemark(markdown)
   }
 
-  basicMarkdownToHtml(markdown) {
-    // Basic markdown parser as fallback
-    return markdown
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`(.*?)`/g, '<code>$1</code>')
-      .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/^(.+)$/gm, '<p>$1</p>')
-      .replace(/<p><h/g, '<h')
-      .replace(/<\/h([1-6])><\/p>/g, '</h$1>')
-      .replace(/<p><blockquote>/g, '<blockquote>')
-      .replace(/<\/blockquote><\/p>/g, '</blockquote>')
-  }
 }
 
 // Initialize the editor when the DOM is loaded
