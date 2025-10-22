@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "nuekit": "^2.0.0-beta.2",
+    "nuemark": "^0.7.0",
+    "nueyaml": "^0.1.0"
+  }
+}

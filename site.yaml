@@ -10,12 +10,12 @@ design:
   layers: [reset, base, components, utilities]
   inline_css: false
 
-# Import map for client-side modules
-import_map:
-  app: /app/index.js
-
 # Meta defaults
 meta:
   title: Markdown Editor
   description: A pure client-side markdown editor with live preview
   viewport: width=device-width,initial-scale=1
+
+# Import map for client-side modules
+import_map:
+  app: /index.js
