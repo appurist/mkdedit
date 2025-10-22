@@ -1,0 +1,42 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Editor</title>
+  <link rel="stylesheet" href="index.css">
+  <script src="https://cdn.jsdelivr.net/npm/@linguix.com/lx-checker-sdk/dist/bundle.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="toolbar">
+      <h1>Markdown Editor</h1>
+      <div class="file-controls">
+        <select id="fileSelect" class="file-select">
+          <option value="">Select a file...</option>
+        </select>
+        <button id="openFile" class="btn">Open</button>
+        <button id="newFile" class="btn">New</button>
+        <button id="saveFile" class="btn btn-primary">Save</button>
+        <button id="saveAsFile" class="btn">Save As</button>
+        <button id="grammarCheck" class="btn btn-toggle">Grammar</button>
+      </div>
+    </header>
+    
+    <main class="editor-container">
+      <div class="editor-pane">
+        <textarea id="editor" placeholder="Start typing your markdown here..."></textarea>
+      </div>
+      
+      <div class="splitter" id="splitter"></div>
+      
+      <div class="preview-pane">
+        <div id="preview" class="preview-content"></div>
+      </div>
+    </main>
+  </div>
+  
+  <script type="module" src="app/index.js"></script>
+</body>
+</html>

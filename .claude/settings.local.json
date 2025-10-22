@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__nuejs-docs__indexOfNuejs",
+      "mcp__nuejs-docs__getDocumentOfNuejs",
+      "WebFetch(domain:developer.linguix.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
