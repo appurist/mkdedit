@@ -461,10 +461,6 @@ class MarkdownEditor {
     }
   }
 
-    // Use Nuemark for full-featured markdown rendering
-    this.preview.innerHTML = nuemark(markdown)
-  }
-
 }
 
 // Initialize the editor when the DOM is loaded
