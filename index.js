@@ -1,5 +1,4 @@
-import { nuemark } from "./node_modules/nuemark/index.js"
-
+// Markdown Editor Application
 class MarkdownEditor {
   constructor() {
     this.currentFile = null
@@ -430,12 +429,37 @@ class MarkdownEditor {
     }
   }
 
-  updatePreview() {
+  async updatePreview() {
     const markdown = this.editor.value
     if (!markdown.trim()) {
       this.preview.innerHTML = '<p class="empty-state">Start typing markdown to see the preview...</p>'
       return
     }
+    
+    try {
+      // Use server-side Nuemark rendering where node_modules is accessible
+      const response = await fetch('/api/render', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ markdown })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        this.preview.innerHTML = data.html
+        console.log('Rendered with server-side Nuemark')
+      } else {
+        throw new Error('Server rendering failed')
+      }
+    } catch (error) {
+      console.error('Server-side Nuemark failed:', error)
+      // Fallback to basic rendering
+      this.preview.innerHTML = this.basicMarkdownToHtml(markdown)
+      console.log('Using fallback - server-side Nuemark unavailable')
+    }
+  }
 
     // Use Nuemark for full-featured markdown rendering
     this.preview.innerHTML = nuemark(markdown)

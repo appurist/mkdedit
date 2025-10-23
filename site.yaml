@@ -16,6 +16,11 @@ meta:
   description: A pure client-side markdown editor with live preview
   viewport: width=device-width,initial-scale=1
 
+# Server configuration
+server:
+  dir: server
+  reload: true
+
 # Import map for client-side modules
 import_map:
   app: /index.js
