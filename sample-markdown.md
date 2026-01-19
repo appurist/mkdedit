@@ -3,18 +3,18 @@ title: Markdown Demo
 sections: true
 ---
 
-# Welcome to Markdown
+## Welcome to Markdown
 
 This demonstrates Markdown's features.
 
-## Standard Markdown
+### Standard Markdown
 
 - **Bold text** and *italic text*
 - `inline code` and links: [Markdown Guide](https://www.markdownguide.org/)
 - > Blockquotes work great
 - ~strikethrough text~
 
-### Code Blocks
+### Including Code Blocks
 
 ```javascript
 function hello() {

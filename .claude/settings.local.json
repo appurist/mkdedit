@@ -5,7 +5,10 @@
       "mcp__nuejs-docs__getDocumentOfNuejs",
       "WebFetch(domain:developer.linguix.com)",
       "Bash(bun install)",
-      "Bash(timeout 10 bun run dev:*)"
+      "Bash(timeout 10 bun run dev:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm tauri init:*)",
+      "Bash(pnpm tauri:dev:*)"
     ],
     "deny": [],
     "ask": []

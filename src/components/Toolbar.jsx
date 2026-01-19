@@ -1,5 +1,3 @@
-import { Show } from 'solid-js'
-
 export default function Toolbar(props) {
   const displayName = () => {
     const file = props.currentFile()
@@ -20,11 +18,6 @@ export default function Toolbar(props) {
         <button class="btn btn-primary" onClick={props.onSave}>Save</button>
         <button class="btn" onClick={props.onSaveAs}>Save As</button>
       </div>
-      <Show when={!props.supportsFileSystemAccess}>
-        <div class="browser-notice">
-          For native file dialogs, use Chrome/Edge 86+ or Firefox with flag enabled
-        </div>
-      </Show>
     </header>
   )
 }

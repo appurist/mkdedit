@@ -1,88 +1,57 @@
 import { createSignal } from 'solid-js'
+import { open, save } from '@tauri-apps/plugin-dialog'
+import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 
 export function useFileSystem() {
   const [currentFile, setCurrentFile] = createSignal(null)
-  const [currentFileHandle, setCurrentFileHandle] = createSignal(null)
+  const [currentFilePath, setCurrentFilePath] = createSignal(null)
   const [isDirty, setIsDirty] = createSignal(false)
 
-  const supportsFileSystemAccess = 'showOpenFilePicker' in window
+  // Always true in Tauri - native dialogs always work
+  const supportsFileSystemAccess = true
 
-  function getStartInDirectory() {
-    const hasUsedBefore = localStorage.getItem('lastFileLocation')
-    return hasUsedBefore ? undefined : 'documents'
-  }
-
-  function updateLastFileLocation(fileHandle) {
-    if (fileHandle) {
-      localStorage.setItem('lastFileLocation', 'true')
-    }
-  }
-
-  function getUnsupportedMessage() {
-    return `File System Access API is not supported in this browser.\n\n` +
-      `Supported browsers:\n` +
-      `- Chrome 86+ or Edge 86+\n` +
-      `- Firefox: Enable 'dom.fs.enabled' in about:config\n` +
-      `- Safari: Not yet supported\n\n` +
-      `Current browser: ${navigator.userAgent.split(' ')[0]}`
+  function extractFilename(path) {
+    if (!path) return null
+    return path.split(/[/\\]/).pop()
   }
 
   async function openFile() {
-    if (!supportsFileSystemAccess) {
-      alert(getUnsupportedMessage())
-      return null
-    }
-
     try {
-      const startIn = getStartInDirectory()
-      const options = {
-        types: [{
-          description: 'Markdown files',
-          accept: { 'text/markdown': ['.md'] }
-        }],
-        multiple: false
+      const selected = await open({
+        multiple: false,
+        filters: [{
+          name: 'Markdown',
+          extensions: ['md']
+        }]
+      })
+
+      // User cancelled
+      if (selected === null) {
+        return null
       }
 
-      if (startIn) {
-        options.startIn = startIn
-      }
+      const content = await readTextFile(selected)
 
-      const [fileHandle] = await window.showOpenFilePicker(options)
-      const file = await fileHandle.getFile()
-      const content = await file.text()
-
-      setCurrentFile(file.name)
-      setCurrentFileHandle(fileHandle)
-      updateLastFileLocation(fileHandle)
+      setCurrentFilePath(selected)
+      setCurrentFile(extractFilename(selected))
       setIsDirty(false)
 
       return content
     } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('File picker error:', error)
-        alert(`Failed to open file: ${error.message}`)
-      }
+      console.error('File open error:', error)
       return null
     }
   }
 
   async function saveFile(content) {
-    if (!supportsFileSystemAccess) {
-      alert(getUnsupportedMessage())
-      return false
-    }
-
-    const handle = currentFileHandle()
-    if (handle) {
+    const path = currentFilePath()
+    if (path) {
       try {
-        const writable = await handle.createWritable()
-        await writable.write(content)
-        await writable.close()
+        await writeTextFile(path, content)
         setIsDirty(false)
         return true
       } catch (error) {
-        console.error('Failed to save with file handle:', error)
-        alert('Failed to save file')
+        console.error('Failed to save file:', error)
         return false
       }
     }
@@ -91,48 +60,36 @@ export function useFileSystem() {
   }
 
   async function saveAsFile(content) {
-    if (!supportsFileSystemAccess) {
-      alert(getUnsupportedMessage())
-      return false
-    }
-
     try {
-      const startIn = getStartInDirectory()
-      const options = {
-        suggestedName: currentFile() || 'document.md',
-        types: [{
-          description: 'Markdown files',
-          accept: { 'text/markdown': ['.md'] }
+      const selected = await save({
+        defaultPath: currentFile() || 'document.md',
+        filters: [{
+          name: 'Markdown',
+          extensions: ['md']
         }]
+      })
+
+      // User cancelled
+      if (selected === null) {
+        return false
       }
 
-      if (startIn) {
-        options.startIn = startIn
-      }
+      await writeTextFile(selected, content)
 
-      const fileHandle = await window.showSaveFilePicker(options)
-      const writable = await fileHandle.createWritable()
-      await writable.write(content)
-      await writable.close()
-
-      setCurrentFile(fileHandle.name)
-      setCurrentFileHandle(fileHandle)
-      updateLastFileLocation(fileHandle)
+      setCurrentFilePath(selected)
+      setCurrentFile(extractFilename(selected))
       setIsDirty(false)
 
       return true
     } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Failed to save file:', error)
-        alert('Failed to save file')
-      }
+      console.error('Failed to save file:', error)
       return false
     }
   }
 
   function newFile() {
     setCurrentFile(null)
-    setCurrentFileHandle(null)
+    setCurrentFilePath(null)
     setIsDirty(false)
   }
 
@@ -142,7 +99,7 @@ export function useFileSystem() {
 
   return {
     currentFile,
-    currentFileHandle,
+    currentFilePath,
     isDirty,
     supportsFileSystemAccess,
     openFile,
