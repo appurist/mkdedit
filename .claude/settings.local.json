@@ -3,7 +3,9 @@
     "allow": [
       "mcp__nuejs-docs__indexOfNuejs",
       "mcp__nuejs-docs__getDocumentOfNuejs",
-      "WebFetch(domain:developer.linguix.com)"
+      "WebFetch(domain:developer.linguix.com)",
+      "Bash(bun install)",
+      "Bash(timeout 10 bun run dev:*)"
     ],
     "deny": [],
     "ask": []

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-mkdedit is a browser-based Markdown editor with live preview, using Nuemark for server-side rendering. It features native file system access (Chrome/Edge), a resizable split-pane editor/preview, and optional Linguix grammar checking.
+mkdedit is a browser-based Markdown editor with live preview, built with SolidJS and Vite. It uses `marked` for client-side GitHub-flavored markdown rendering. It features native file system access (Chrome/Edge), a resizable split-pane editor/preview, and keyboard shortcuts.
 
 ## Development Commands
 
@@ -12,35 +12,47 @@ mkdedit is a browser-based Markdown editor with live preview, using Nuemark for 
 # Install dependencies (uses Bun)
 bun install
 
-# Run the development server (port 4000 by default, configured in site.yaml)
-bunx nue serve
+# Run the development server (port 4000)
+bun run dev
+
+# Production build
+bun run build
+
+# Preview production build
+bun run preview
 ```
 
 ## Architecture
 
-**Client-Server Split:**
-- `index.html` / `index.js` / `index.css` - Client-side SPA in the root directory
-- `server/index.js` - Server-side API endpoints using Nue.js routing
+**Pure Client-Side SPA:**
+- `index.html` - Vite entry point
+- `src/index.jsx` - SolidJS mount point
+- `src/App.jsx` - Root component with state management
 
-**Key Components:**
-- `MarkdownEditor` class (index.js) - Main application class handling:
-  - File System Access API for native open/save dialogs (Chrome/Edge 86+)
-  - Live preview via server-side Nuemark rendering (`POST /api/render`)
-  - Linguix SDK integration for grammar checking (API key stored in localStorage)
-  - Resizable splitter between editor and preview panes
-  - Keyboard shortcut: `Ctrl+S` to save
+**Components (src/components/):**
+- `Toolbar.jsx` - File controls (New, Open, Save, Save As) and filename display
+- `Editor.jsx` - Textarea pane for markdown input
+- `Preview.jsx` - Rendered markdown preview pane
+- `Splitter.jsx` - Resizable divider between panes
 
-**Server Endpoints (server/index.js):**
-- `POST /api/render` - Server-side Nuemark markdown-to-HTML rendering
-- `GET /api/files/:filename` - Read markdown files from `docs/` directory
-- `POST /api/files/:filename` - Save markdown files to `docs/` directory
-- `GET /api/files` - List all `.md` files in `docs/` directory
+**Hooks (src/hooks/):**
+- `useFileSystem.js` - File System Access API for native file dialogs
+- `useMarkdown.js` - marked library configuration for GFM parsing
 
-Note: Server uses Nue.js built-in routing - `get()` and `post()` are global functions, not Express middleware. The `docs/` directory is auto-created on first file operation.
+**Styles:**
+- `src/styles/index.css` - All application styles including markdown preview
 
 **Configuration:**
-- `site.yaml` - Nue.js config (port, import maps, server directory location)
-- `package.json` - Dependencies: nuemark (markdown), nueyaml (YAML parsing)
+- `vite.config.js` - Vite config with SolidJS plugin, port 4000
+- `package.json` - Dependencies: solid-js, marked, vite, vite-plugin-solid
+
+**Features:**
+- New/Open/Save/Save As with native file dialogs
+- Current filename display with dirty indicator (*)
+- Resizable splitter between panes
+- Ctrl+S keyboard shortcut
+- GitHub-flavored markdown (tables, strikethrough, task lists)
+- Browser compatibility notice when File System Access API unavailable
 
 **Browser Compatibility:**
 - Full functionality: Chrome 86+, Edge 86+
