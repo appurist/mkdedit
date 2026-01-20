@@ -1,4 +1,6 @@
 use tauri::{Emitter, Manager};
+#[cfg(target_os = "macos")]
+use tauri::RunEvent;
 
 #[derive(Clone, serde::Serialize)]
 struct OpenFilePayload {
@@ -6,34 +8,39 @@ struct OpenFilePayload {
     content: String,
 }
 
+fn read_file_payload(file_path: &str) -> Option<OpenFilePayload> {
+    let path = std::path::Path::new(file_path);
+    let absolute_path = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .unwrap_or_default()
+            .join(path)
+    };
+    if let Ok(canonical) = absolute_path.canonicalize() {
+        if let Ok(content) = std::fs::read_to_string(&canonical) {
+            if let Some(path_str) = canonical.to_str() {
+                return Some(OpenFilePayload {
+                    path: path_str.to_string(),
+                    content,
+                });
+            }
+        }
+    }
+    None
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut initial_file: Option<OpenFilePayload> = None;
 
-    // Check for file path argument
+    // Check for file path argument (Linux/Windows CLI)
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 1 && !args[1].starts_with('-') {
-        let file_path = std::path::Path::new(&args[1]);
-        let absolute_path = if file_path.is_absolute() {
-            file_path.to_path_buf()
-        } else {
-            std::env::current_dir()
-                .unwrap_or_default()
-                .join(file_path)
-        };
-        if let Ok(canonical) = absolute_path.canonicalize() {
-            if let Ok(content) = std::fs::read_to_string(&canonical) {
-                if let Some(path_str) = canonical.to_str() {
-                    initial_file = Some(OpenFilePayload {
-                        path: path_str.to_string(),
-                        content,
-                    });
-                }
-            }
-        }
+        initial_file = read_file_payload(&args[1]);
     }
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .setup(move |app| {
@@ -56,6 +63,30 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        // Handle macOS "Open With" file associations
+        #[cfg(target_os = "macos")]
+        if let RunEvent::Opened { urls } = &event {
+            for url in urls {
+                // Convert file:// URL to path
+                if let Ok(path) = url.to_file_path() {
+                    if let Some(path_str) = path.to_str() {
+                        if let Some(payload) = read_file_payload(path_str) {
+                            if let Some(window) = app_handle.get_webview_window("main") {
+                                // Delay to let frontend initialize (Opened fires before Ready)
+                                std::thread::spawn(move || {
+                                    std::thread::sleep(std::time::Duration::from_millis(500));
+                                    let _ = window.emit("open-file", payload);
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        let _ = (app_handle, event); // Suppress unused warnings on non-macOS
+    });
 }
