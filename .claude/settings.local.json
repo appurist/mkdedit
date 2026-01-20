@@ -10,7 +10,9 @@
       "Bash(pnpm tauri init:*)",
       "Bash(pnpm tauri:dev:*)",
       "Bash(git rev-parse:*)",
-      "Bash(dpkg:*)"
+      "Bash(dpkg:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nBump version to 1.0.1\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []
