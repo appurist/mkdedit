@@ -1,4 +1,5 @@
 import { createSignal, createEffect, onMount, onCleanup } from 'solid-js'
+import { listen } from '@tauri-apps/api/event'
 import { useFileSystem } from './hooks/useFileSystem'
 import { useMarkdown } from './hooks/useMarkdown'
 import Toolbar from './components/Toolbar'
@@ -33,6 +34,17 @@ export default function App() {
     }
     document.addEventListener('keydown', handleKeyDown)
     onCleanup(() => document.removeEventListener('keydown', handleKeyDown))
+
+    // Listen for file open from CLI argument (Rust sends path + content)
+    const setupListener = async () => {
+      const unlisten = await listen('open-file', (event) => {
+        const { path, content: fileContent } = event.payload
+        fileSystem.setOpenFile(path)
+        setContent(fileContent)
+      })
+      onCleanup(() => unlisten())
+    }
+    setupListener()
   })
 
   function handleContentChange(newContent) {

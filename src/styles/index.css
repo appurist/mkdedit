@@ -102,11 +102,23 @@ body {
 }
 
 .splitter {
-  width: 4px;
+  width: 6px;
   background: #ddd;
   cursor: col-resize;
   border-left: 1px solid #ccc;
   border-right: 1px solid #ccc;
+  position: relative;
+}
+
+/* Larger invisible hit area for easier grabbing */
+.splitter::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -8px;
+  right: -8px;
+  cursor: col-resize;
 }
 
 .splitter:hover {

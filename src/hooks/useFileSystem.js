@@ -97,6 +97,13 @@ export function useFileSystem() {
     setIsDirty(true)
   }
 
+  // Set file state from CLI argument (content already read by Rust)
+  function setOpenFile(path) {
+    setCurrentFilePath(path)
+    setCurrentFile(extractFilename(path))
+    setIsDirty(false)
+  }
+
   return {
     currentFile,
     currentFilePath,
@@ -107,6 +114,7 @@ export function useFileSystem() {
     saveAsFile,
     newFile,
     markDirty,
-    setIsDirty
+    setIsDirty,
+    setOpenFile
   }
 }

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Categories=Office;TextEditor;
+Comment=A Markdown editor with live preview
+Exec=mkdedit %f
+StartupWMClass=mkdedit
+Icon=mkdedit
+Name=mkdedit
+MimeType=text/markdown;text/x-markdown;
+Terminal=false
+Type=Application
