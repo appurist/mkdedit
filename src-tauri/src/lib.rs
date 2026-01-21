@@ -75,13 +75,15 @@ pub fn run() {
                 if let Ok(path) = url.to_file_path() {
                     if let Some(path_str) = path.to_str() {
                         if let Some(payload) = read_file_payload(path_str) {
-                            if let Some(window) = app_handle.get_webview_window("main") {
-                                // Delay to let frontend initialize (Opened fires before Ready)
-                                std::thread::spawn(move || {
-                                    std::thread::sleep(std::time::Duration::from_millis(500));
+                            // Clone handle to use in spawned thread
+                            let handle = app_handle.clone();
+                            // Delay to let window and frontend initialize (Opened fires before Ready)
+                            std::thread::spawn(move || {
+                                std::thread::sleep(std::time::Duration::from_millis(1000));
+                                if let Some(window) = handle.get_webview_window("main") {
                                     let _ = window.emit("open-file", payload);
-                                });
-                            }
+                                }
+                            });
                         }
                     }
                 }
