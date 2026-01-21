@@ -1,6 +1,6 @@
 {
   "name": "mkdedit",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
+    "tauri:build": "tauri build --no-bundle",
     "tauri:build:win": "tauri build --bundles nsis,msi",
     "tauri:build:mac": "tauri build --bundles dmg,app",
     "tauri:build:linux": "tauri build --bundles deb,appimage",

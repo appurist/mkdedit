@@ -10,6 +10,7 @@ import Preview from './components/Preview'
 export default function App() {
   const [content, setContent] = createSignal('')
   const [editorWidth, setEditorWidth] = createSignal(50)
+  const [viewMode, setViewMode] = createSignal('rendered') // 'source', 'split', 'rendered'
 
   const fileSystem = useFileSystem()
   const { parse } = useMarkdown()
@@ -19,9 +20,18 @@ export default function App() {
     const file = fileSystem.currentFile()
     const dirty = fileSystem.isDirty()
     const title = file
-      ? `${file}${dirty ? ' *' : ''} - Markdown Editor`
-      : 'Markdown Editor'
+      ? `${file}${dirty ? ' *' : ''} - mkdedit`
+      : 'mkdedit'
     document.title = title
+  })
+
+  // Switch to split view if no file is loaded after startup
+  onMount(() => {
+    setTimeout(() => {
+      if (!fileSystem.currentFile() && !content()) {
+        setViewMode('split')
+      }
+    }, 1200) // Wait for CLI/Open With file to load
   })
 
   // Keyboard shortcut: Ctrl+S to save
@@ -41,6 +51,7 @@ export default function App() {
         const { path, content: fileContent } = event.payload
         fileSystem.setOpenFile(path)
         setContent(fileContent)
+        setViewMode('rendered')
       })
       onCleanup(() => unlisten())
     }
@@ -55,12 +66,14 @@ export default function App() {
   function handleNew() {
     setContent('')
     fileSystem.newFile()
+    setViewMode('split')
   }
 
   async function handleOpen() {
     const fileContent = await fileSystem.openFile()
     if (fileContent !== null) {
       setContent(fileContent)
+      setViewMode('rendered')
     }
   }
 
@@ -78,22 +91,32 @@ export default function App() {
         currentFile={fileSystem.currentFile}
         isDirty={fileSystem.isDirty}
         supportsFileSystemAccess={fileSystem.supportsFileSystemAccess}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
         onNew={handleNew}
         onOpen={handleOpen}
         onSave={handleSave}
         onSaveAs={handleSaveAs}
       />
       <main class="editor-container">
-        <Editor
-          content={content}
-          onInput={handleContentChange}
-          width={editorWidth}
-        />
-        <Splitter onResize={setEditorWidth} />
-        <Preview
-          html={() => parse(content())}
-          width={() => 100 - editorWidth()}
-        />
+        {(viewMode() === 'source' || viewMode() === 'split') && (
+          <Editor
+            content={content}
+            onInput={handleContentChange}
+            width={() => viewMode() === 'split' ? editorWidth() : 100}
+            viewMode={viewMode}
+          />
+        )}
+        {viewMode() === 'split' && (
+          <Splitter onResize={setEditorWidth} />
+        )}
+        {(viewMode() === 'rendered' || viewMode() === 'split') && (
+          <Preview
+            html={() => parse(content())}
+            width={() => viewMode() === 'split' ? 100 - editorWidth() : 100}
+            viewMode={viewMode}
+          />
+        )}
       </main>
     </div>
   )

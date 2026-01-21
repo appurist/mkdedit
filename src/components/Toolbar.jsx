@@ -10,7 +10,27 @@ export default function Toolbar(props) {
 
   return (
     <header class="toolbar">
-      <h1>Markdown Editor</h1>
+      <h1>mkdedit</h1>
+      <div class="view-toggle">
+        <button
+          class={`btn-toggle ${props.viewMode() === 'source' ? 'active' : ''}`}
+          onClick={() => props.onViewModeChange('source')}
+        >
+          Source
+        </button>
+        <button
+          class={`btn-toggle ${props.viewMode() === 'split' ? 'active' : ''}`}
+          onClick={() => props.onViewModeChange('split')}
+        >
+          Split
+        </button>
+        <button
+          class={`btn-toggle ${props.viewMode() === 'rendered' ? 'active' : ''}`}
+          onClick={() => props.onViewModeChange('rendered')}
+        >
+          Rendered
+        </button>
+      </div>
       <div class="file-controls">
         <span class="current-file">{displayName()}</span>
         <button class="btn" onClick={props.onOpen}>Open</button>

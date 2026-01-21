@@ -1,6 +1,11 @@
 export default function Editor(props) {
+  const isFullWidth = () => props.viewMode && props.viewMode() === 'source'
+
   return (
-    <div class="editor-pane" style={{ flex: `0 0 ${props.width()}%` }}>
+    <div
+      class={`editor-pane ${isFullWidth() ? 'editor-full' : ''}`}
+      style={{ flex: `0 0 ${props.width()}%` }}
+    >
       <textarea
         id="editor"
         placeholder="Start typing your markdown here..."

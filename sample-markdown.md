@@ -18,7 +18,7 @@ This demonstrates Markdown's features.
 
 ```javascript
 function hello() {
-  return "Hello from Nuemark!"
+  return "Hello from Markdown!"
 }
 ```
 
