@@ -1,5 +1,6 @@
 import { createSignal, createEffect, onMount, onCleanup } from 'solid-js'
 import { listen } from '@tauri-apps/api/event'
+import { invoke } from '@tauri-apps/api/core'
 import { useFileSystem } from './hooks/useFileSystem'
 import { useMarkdown } from './hooks/useMarkdown'
 import Toolbar from './components/Toolbar'
@@ -45,15 +46,24 @@ export default function App() {
     document.addEventListener('keydown', handleKeyDown)
     onCleanup(() => document.removeEventListener('keydown', handleKeyDown))
 
-    // Listen for file open from CLI argument (Rust sends path + content)
+    // Open a file delivered by Rust (CLI argument or macOS Open With)
+    const openDeliveredFile = ({ path, content: fileContent }) => {
+      fileSystem.setOpenFile(path)
+      setContent(fileContent)
+      setViewMode('rendered')
+    }
+
     const setupListener = async () => {
+      // Register the listener first so nothing emitted afterwards is missed
       const unlisten = await listen('open-file', (event) => {
-        const { path, content: fileContent } = event.payload
-        fileSystem.setOpenFile(path)
-        setContent(fileContent)
-        setViewMode('rendered')
+        openDeliveredFile(event.payload)
       })
       onCleanup(() => unlisten())
+      // Then collect any file that arrived before the listener existed
+      const pending = await invoke('frontend_ready')
+      if (pending) {
+        openDeliveredFile(pending)
+      }
     }
     setupListener()
   })
